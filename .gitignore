@@ -200,3 +200,4 @@ cmake/sources/*.txt
 
 # Python virtual environment
 **/.venv
+.terraform*
