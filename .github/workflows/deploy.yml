@@ -193,6 +193,8 @@ jobs:
           --set image.repository=$GAR_REGISTRY/backend \
           --set image.tag=$IMAGE_TAG \
           --set env.NIM_API_KEY=${{ secrets.NIM_API_KEY }} \
+          --set env.NIM_BASE_URL=${{ secrets.NIM_BASE_URL }} \
+          --set env.NIM_MODEL=${{ secrets.NIM_MODEL }} \
           --set env.POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
 
   # Deploy static website to GCS
