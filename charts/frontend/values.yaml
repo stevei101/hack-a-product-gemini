@@ -1,0 +1,126 @@
+# Default values for frontend chart
+# This is a YAML-formatted file
+
+# Number of replicas
+replicaCount: 2
+
+# Image configuration
+image:
+  repository: smithveunsa/react-bun-k8s
+  tag: frontend
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+  # Override for different environments
+  # registry: docker.io
+  # name: react-bun-k8s
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+  # Optional: LoadBalancer for cloud providers
+  # type: LoadBalancer
+  # annotations:
+  #   service.beta.kubernetes.io/aws-load-balancer-type: nlb
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    # Use cert-manager to automatically issue a TLS certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: myapp.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  # Enable TLS for HTTPS
+  tls:
+    - secretName: myapp-tls
+      hosts:
+        - myapp.example.com
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Node selector and affinity
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Environment-specific overrides
+# Development
+dev:
+  replicaCount: 1
+  image:
+    tag: dev
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Staging
+staging:
+  replicaCount: 2
+  image:
+    tag: staging
+  ingress:
+    hosts:
+      - staging.myapp.example.com
+
+# Production
+production:
+  replicaCount: 3
+  image:
+    tag: latest
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  ingress:
+    hosts:
+      - myapp.example.com
+      - www.myapp.example.com

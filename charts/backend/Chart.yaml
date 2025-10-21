@@ -1,0 +1,17 @@
+apiVersion: v2
+name: agentic-backend
+description: Agentic Application Backend (FastAPI + NVIDIA NIM)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - fastapi
+  - python
+  - nvidia-nim
+  - agentic-ai
+home: https://github.com/your-org/agentic-app
+sources:
+  - https://github.com/your-org/agentic-app
+maintainers:
+  - name: Agentic Team
+    email: team@agentic.com
