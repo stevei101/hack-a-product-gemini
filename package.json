@@ -1,0 +1,31 @@
+{
+  "name": "react-bun-k8s",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bun --bun dev",
+    "build": "bunx postcss src/index.css -o dist/index.css && bun build --outdir dist --target browser src/index.tsx && cp public/index.html dist/",
+    "preview": "bun --bun preview",
+    "check": "./scripts/check-prerequisites.sh",
+    "container:build": "./scripts/build.sh",
+    "container:run": "make container-run",
+    "container:push": "./scripts/push.sh",
+    "deploy": "./scripts/deploy.sh",
+    "setup": "make dev-setup",
+    "help": "make help"
+  },
+  "dependencies": {
+    "lucide-react": "^0.546.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.15",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
+    "tailwindcss": "^4.1.15",
+    "typescript": "^5.4.0"
+  }
+}
