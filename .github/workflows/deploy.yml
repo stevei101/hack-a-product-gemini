@@ -1,4 +1,4 @@
-name: Deploy The Product Mindset to GCP
+name: Deploy to GCP
 
 on:
   push:
@@ -7,70 +7,12 @@ on:
     branches: [ switch-to-google ]
 
 env:
-  GCP_REGION: us-central1
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: 'us-central1'
+  GAR_LOCATION: ${{ secrets.GCP_REGION }}-docker.pkg.dev
   PROJECT_NAME: product-mindset
 
 jobs:
-  # Infrastructure deployment with Terraform
-  infrastructure:
-    name: Deploy Infrastructure
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/switch-to-google'
-    
-    permissions:
-      id-token: write
-      contents: read
-      
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: 'Debug: Print GCP Project ID'
-      run: echo "Using GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
-      
-    - name: Authenticate to Google Cloud
-      uses: 'google-github-actions/auth@v2'
-      with:
-        workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_ID }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
-        service_account: 'github-actions-runner@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.6.0
-        
-    - name: Terraform Format Check
-      run: terraform fmt -check
-      working-directory: ./terraform
-      
-    - name: Terraform Init
-      run: terraform init
-      working-directory: ./terraform
-      
-    - name: Terraform Validate
-      run: terraform validate
-      working-directory: ./terraform
-      
-    - name: Terraform Plan
-      run: terraform plan -input=false
-      working-directory: ./terraform
-      env:
-        TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
-        TF_VAR_github_organization: ${{ github.repository_owner }}
-        TF_VAR_github_repository: ${{ github.event.repository.name }}
-        TF_VAR_environment: ${{ github.ref == 'refs/heads/switch-to-google' && 'prod' || 'dev' }}
-      
-    - name: Terraform Apply
-      run: terraform apply -auto-approve -input=false
-      working-directory: ./terraform
-      env:
-        TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
-        TF_VAR_github_organization: ${{ github.repository_owner }}
-        TF_VAR_github_repository: ${{ github.event.repository.name }}
-        TF_VAR_environment: ${{ github.ref == 'refs/heads/switch-to-google' && 'prod' || 'dev' }}
-
-  # Build and test the application
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
@@ -115,129 +57,109 @@ jobs:
         python -m pytest -v
       env:
         NIM_API_KEY: ${{ secrets.NIM_API_KEY }}
-
-  # Deploy to GKE
-  deploy:
-    name: Deploy to GKE
-    runs-on: ubuntu-latest
-    needs: [infrastructure, build-and-test]
-    if: github.ref == 'refs/heads/switch-to-google'
     
-    permissions:
-      id-token: write
-      contents: read
-      
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist
+
+  deploy-infra-and-app:
+    name: Deploy Infrastructure and Application
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    if: github.ref == 'refs/heads/switch-to-google' && github.event_name == 'push'
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: 'Debug: Print GCP Project ID'
-      run: echo "Using GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
-      
+
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v2'
       with:
-        workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_ID }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
-        service_account: 'github-actions-runner@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: '1.6.0'
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./terraform
+
+    - name: Terraform Validate
+      run: terraform validate
+      working-directory: ./terraform
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
+      working-directory: ./terraform
+      env:
+        TF_VAR_gcp_project_id: ${{ env.GCP_PROJECT_ID }}
+        TF_VAR_github_organization: ${{ github.repository_owner }}
+        TF_VAR_github_repository: ${{ github.event.repository.name }}
+        TF_VAR_environment: 'dev' # Hardcoded for this branch
 
     - name: Login to Artifact Registry
-      run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+      run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}
 
     - name: Build and push frontend image
-      env:
-        GAR_REGISTRY: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/app-images
-        IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build -t $GAR_REGISTRY/frontend:$IMAGE_TAG .
-        docker tag $GAR_REGISTRY/frontend:$IMAGE_TAG $GAR_REGISTRY/frontend:latest
-        docker push $GAR_REGISTRY/frontend:$IMAGE_TAG
-        docker push $GAR_REGISTRY/frontend:latest
-        
+        docker build -t ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/app-images/frontend:${{ github.sha }} .
+        docker push ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/app-images/frontend:${{ github.sha }}
+
     - name: Build and push backend image
-      env:
-        GAR_REGISTRY: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/app-images
-        IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build -t $GAR_REGISTRY/backend:$IMAGE_TAG ./backend
-        docker tag $GAR_REGISTRY/backend:$IMAGE_TAG $GAR_REGISTRY/backend:latest
-        docker push $GAR_REGISTRY/backend:$IMAGE_TAG
-        docker push $GAR_REGISTRY/backend:latest
-        
+        docker build -t ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/app-images/backend:${{ github.sha }} ./backend
+        docker push ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/app-images/backend:${{ github.sha }}
+
     - name: Setup kubectl
       uses: azure/setup-kubectl@v3
       with:
         version: 'latest'
         
     - name: Configure kubectl for GKE
-      run: |
-        gcloud container clusters get-credentials primary-cluster --region ${{ env.GCP_REGION }}
-        
-    - name: Deploy with Helm
-      env:
-        GAR_REGISTRY: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/app-images
-        IMAGE_TAG: ${{ github.sha }}
-        ENVIRONMENT: ${{ github.ref == 'refs/heads/switch-to-google' && 'prod' || 'dev' }}
-      run: |
-        # Update Helm values with GAR image references
-        sed -i "s|repository: .*|repository: $GAR_REGISTRY/frontend|g" charts/frontend/values.yaml
-        sed -i "s|tag: .*|tag: $IMAGE_TAG|g" charts/frontend/values.yaml
-        
-        sed -i "s|repository: .*|repository: $GAR_REGISTRY/backend|g" charts/backend/values.yaml
-        sed -i "s|tag: .*|tag: $IMAGE_TAG|g" charts/backend/values.yaml
-        
-        # Deploy frontend
-        helm upgrade --install frontend ./charts/frontend \
-          --namespace $ENVIRONMENT \
-          --create-namespace \
-          --set image.repository=$GAR_REGISTRY/frontend \
-          --set image.tag=$IMAGE_TAG
-          
-        # Deploy backend
-        helm upgrade --install backend ./charts/backend \
-          --namespace $ENVIRONMENT \
-          --create-namespace \
-          --set image.repository=$GAR_REGISTRY/backend \
-          --set image.tag=$IMAGE_TAG \
-          --set env.NIM_API_KEY=${{ secrets.NIM_API_KEY }} \
-          --set env.NIM_BASE_URL=${{ secrets.NIM_BASE_URL }} \
-          --set env.NIM_MODEL=${{ secrets.NIM_MODEL }} \
-          --set env.POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+      run: gcloud container clusters get-credentials primary-cluster --region ${{ env.GCP_REGION }}
 
-  # Deploy static website to GCS
-  deploy-static:
-    name: Deploy Static Website to GCS
+    - name: Deploy with Helm
+      run: |
+        helm upgrade --install frontend ./charts/frontend \
+          --namespace dev \
+          --create-namespace \
+          --set image.repository=${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/app-images/frontend \
+          --set image.tag=${{ github.sha }}
+          
+        helm upgrade --install backend ./charts/backend \
+          --namespace dev \
+          --create-namespace \
+          --set image.repository=${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/app-images/backend \
+          --set image.tag=${{ github.sha }} \
+          --set env.NIM_API_KEY='${{ secrets.NIM_API_KEY }}' \
+          --set env.NIM_BASE_URL='${{ secrets.NIM_BASE_URL }}' \
+          --set env.NIM_MODEL='${{ secrets.NIM_MODEL }}' \
+          --set env.POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}'
+
+  deploy-static-site:
+    name: Deploy Static Site to GCS
     runs-on: ubuntu-latest
-    needs: [infrastructure, build-and-test]
-    if: github.ref == 'refs/heads/switch-to-google'
-    
-    permissions:
-      id-token: write
-      contents: read
-      
+    needs: [build-and-test]
+    if: github.ref == 'refs/heads/switch-to-google' && github.event_name == 'push'
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: 'Debug: Print GCP Project ID'
-      run: echo "Using GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
-      
+
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
+
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v2'
       with:
-        workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_ID }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
-        service_account: 'github-actions-runner@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
-        
-    - name: Setup Bun
-      uses: oven-sh/setup-bun@v1
-      with:
-        bun-version: latest
-        
-    - name: Install dependencies
-      run: bun install
-      
-    - name: Build frontend
-      run: bun run build
-      
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
     - name: Deploy to GCS
-      run: |
-        gsutil rsync -d -r dist/ gs://${{ env.GCP_PROJECT_ID }}-frontend-bucket
+      run: gsutil rsync -d -r dist/ gs://${{ env.GCP_PROJECT_ID }}-frontend-bucket
