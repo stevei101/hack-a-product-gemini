@@ -1,13 +1,13 @@
 # variables.tf
 
-variable "aws_region" {
-  description = "The AWS region to create resources in."
-  default     = "us-east-1"
+variable "gcp_project_id" {
+  description = "The GCP project ID to create resources in."
+  type        = string
 }
 
-variable "bucket_name" {
-  description = "The name of the S3 bucket. Must be globally unique."
-  type        = string
+variable "gcp_region" {
+  description = "The GCP region to create resources in."
+  default     = "us-central1"
 }
 
 variable "environment" {

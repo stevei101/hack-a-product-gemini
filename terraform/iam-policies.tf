@@ -1,96 +1,63 @@
 # terraform/iam-policies.tf
 
-# --- GitHub Actions OIDC Role ---
+# --- GitHub Actions Workload Identity Federation ---
 
-# Data source for current AWS account
-data "aws_caller_identity" "current" {}
+# Service Account for GitHub Actions
+resource "google_service_account" "github_actions" {
+  account_id   = "github-actions-runner"
+  display_name = "GitHub Actions Runner"
+  description  = "Service account for GitHub Actions to deploy resources"
+}
 
-# Trust policy document that allows GitHub Actions to assume the role
-data "aws_iam_policy_document" "github_actions_trust_policy" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-    effect  = "Allow"
+# Workload Identity Pool
+resource "google_iam_workload_identity_pool" "github_pool" {
+  workload_identity_pool_id = "github-actions-pool"
+  display_name              = "GitHub Actions Pool"
+  description               = "Workload Identity Pool for GitHub Actions"
+}
 
-    principals {
-      type        = "Federated"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"]
-    }
-
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/develop"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
+# Workload Identity Pool Provider for GitHub
+resource "google_iam_workload_identity_pool_provider" "github_provider" {
+  workload_identity_pool_id          = google_iam_workload_identity_pool.github_pool.workload_identity_pool_id
+  workload_identity_pool_provider_id = "github-actions-provider"
+  display_name                       = "GitHub Actions Provider"
+  description                        = "Workload Identity Provider for GitHub Actions"
+  attribute_mapping = {
+    "google.subject"       = "assertion.sub"
+    "attribute.actor"      = "assertion.actor"
+    "attribute.repository" = "assertion.repository"
+  }
+  oidc {
+    issuer_uri = "https://token.actions.githubusercontent.com"
   }
 }
 
-# The IAM role that GitHub Actions will assume
-resource "aws_iam_role" "github_actions_role" {
-  name               = "GitHubAction-AssumeRoleWithAction"
-  assume_role_policy = data.aws_iam_policy_document.github_actions_trust_policy.json
-  description        = "IAM role for GitHub Actions to deploy the frontend"
+# Allow the GitHub Actions service account to be impersonated by the Workload Identity Pool
+resource "google_service_account_iam_member" "github_actions_impersonation" {
+  service_account_id = google_service_account.github_actions.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/${var.github_organization}/${var.github_repository}"
 }
 
-# Permissions policy document for the GitHub Actions role
-data "aws_iam_policy_document" "github_actions_permissions_policy" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "s3:PutObject",
-      "s3:GetObject",
-      "s3:ListBucket",
-      "s3:DeleteObject"
-    ]
-    resources = [
-      aws_s3_bucket.site.arn,
-      "${aws_s3_bucket.site.arn}/*"
-    ]
-  }
+# --- Service Account Permissions ---
 
-  statement {
-    effect = "Allow"
-    actions = [
-      "cloudfront:CreateInvalidation",
-      "cloudfront:ListDistributions"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    effect = "Allow"
-    actions = [
-      "ecr:GetAuthorizationToken",
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:InitiateLayerUpload",
-      "ecr:UploadLayerPart",
-      "ecr:CompleteLayerUpload",
-      "ecr:PutImage"
-    ]
-    resources = ["*"] # ECR actions are not resource-specific in the same way as S3
-  }
-
-  statement {
-    effect    = "Allow"
-    actions   = ["eks:DescribeCluster"]
-    resources = ["*"]
-  }
+# Grant Storage Admin role to the service account for GCS bucket management
+resource "google_project_iam_member" "storage_admin" {
+  project = var.gcp_project_id
+  role    = "roles/storage.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# The IAM policy that grants the permissions
-resource "aws_iam_policy" "github_actions_policy" {
-  name        = "GitHubActions-FrontendDeploy-Policy"
-  description = "Permissions for the GitHub Actions role to deploy the frontend"
-  policy      = data.aws_iam_policy_document.github_actions_permissions_policy.json
+# Grant Kubernetes Engine Admin role for GKE cluster management
+resource "google_project_iam_member" "kubernetes_admin" {
+  project = var.gcp_project_id
+  role    = "roles/container.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Attaching the policy to the role
-resource "aws_iam_role_policy_attachment" "github_actions_attach" {
-  role       = aws_iam_role.github_actions_role.name
-  policy_arn = aws_iam_policy.github_actions_policy.arn
+# Grant Artifact Registry Admin role for Docker image management
+resource "google_project_iam_member" "artifact_registry_admin" {
+  project = var.gcp_project_id
+  role    = "roles/artifactregistry.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
