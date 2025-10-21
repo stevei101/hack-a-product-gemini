@@ -18,13 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/switch-to-google'
     
-    permissions:
-      id-token: write
-      contents: read
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      
+    - name: 'Debug: Print GCP Project ID'
+      run: echo "Using GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
       
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v2'
@@ -128,6 +127,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: 'Debug: Print GCP Project ID'
+      run: echo "Using GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
+      
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v2'
       with:
@@ -211,6 +213,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      
+    - name: 'Debug: Print GCP Project ID'
+      run: echo "Using GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
       
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v2'
