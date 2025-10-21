@@ -29,7 +29,7 @@ jobs:
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v2'
       with:
-        workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
+        workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_ID }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
         service_account: 'github-actions-runner@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
 
     - name: Setup Terraform
@@ -131,7 +131,7 @@ jobs:
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v2'
       with:
-        workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
+        workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_ID }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
         service_account: 'github-actions-runner@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
 
     - name: Login to Artifact Registry
@@ -170,7 +170,7 @@ jobs:
       env:
         GAR_REGISTRY: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/app-images
         IMAGE_TAG: ${{ github.sha }}
-        ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        ENVIRONMENT: ${{ github.ref == 'refs/heads/switch-to-google' && 'prod' || 'dev' }}
       run: |
         # Update Helm values with GAR image references
         sed -i "s|repository: .*|repository: $GAR_REGISTRY/frontend|g" charts/frontend/values.yaml
@@ -215,7 +215,7 @@ jobs:
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v2'
       with:
-        workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
+        workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_ID }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
         service_account: 'github-actions-runner@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
         
     - name: Setup Bun
