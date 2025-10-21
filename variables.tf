@@ -34,11 +34,11 @@ variable "tfc_organization" {
 variable "tfc_workspace_prefix" {
   description = "The prefix for Terraform Cloud workspace names."
   type        = string
-  default     = "product-mindset"
+  default     = "hack-a-product-gemini"
 }
 
 variable "cluster_name" {
-  description = "The name of the EKS cluster."
+  description = "The name of the GKE cluster."
   type        = string
   default     = "product-mindset-dev"
 }
