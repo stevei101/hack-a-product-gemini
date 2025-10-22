@@ -20,7 +20,7 @@ Import existing resources into Terraform state without destroying them.
 
 ```bash
 # In your local terminal or GCP Cloud Shell
-export GCP_PROJECT_ID="free-project-1249"
+export GCP_PROJECT_ID="your-gcp-project-id"  # Replace with your actual project ID
 export GCP_REGION="us-central1"
 export TF_API_TOKEN="your-terraform-cloud-token"
 
@@ -49,7 +49,7 @@ terraform init
 Run the import script:
 
 ```bash
-export GCP_PROJECT_ID="free-project-1249"
+export GCP_PROJECT_ID="your-gcp-project-id"  # Replace with your actual project ID
 ./scripts/import-existing-resources.sh
 ```
 
@@ -165,7 +165,7 @@ If you don't need to preserve the existing resources:
 
 ```bash
 # In GCP Cloud Shell
-export GCP_PROJECT_ID="free-project-1249"
+export GCP_PROJECT_ID="your-gcp-project-id"  # Replace with your actual project ID
 export GCP_REGION="us-central1"
 
 # Delete GKE cluster (takes ~10 minutes)
@@ -224,7 +224,7 @@ Possible causes:
 
 ```bash
 # Set your project
-export GCP_PROJECT_ID="free-project-1249"
+export GCP_PROJECT_ID="your-gcp-project-id"  # Replace with your actual project ID
 
 # Import all resources
 terraform import google_compute_network.vpc "projects/${GCP_PROJECT_ID}/global/networks/gke-network"

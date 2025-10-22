@@ -1,3 +1,4 @@
+# Security - Secrets and Credentials
 .claude/settings.local.json
 .DS_Store
 .env
@@ -5,8 +6,38 @@
 .env.local
 .env.production
 .env.staging
+.env.development
+.env.test
 *.env
+!.env.example
+!env.example
 backend/.env
+*secret*
+!SECURITY_*.md
+!.gitleaksignore
+*credentials*
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+.gcp/
+.aws/
+.azure/
+
+# Terraform sensitive files
+*.tfvars
+!*.tfvars.example
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+crash.log
+crash.*.log
 .eslintcache
 .gdb_history
 .idea

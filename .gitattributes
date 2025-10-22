@@ -1,0 +1,35 @@
+# Git Attributes for Security
+# Prevent accidental commits of sensitive files
+
+# Never merge these file types - always use local version
+*.env merge=ours
+*.tfvars merge=ours
+*secret* merge=ours
+*credentials* merge=ours
+
+# Mark certain files as binary to prevent diffs showing sensitive content
+*.pem binary
+*.key binary
+*.p12 binary
+*.pfx binary
+id_rsa* binary
+
+# Ensure consistent line endings
+*.tf text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+
+# Mark scripts as executable
+*.sh text eol=lf diff=bash
+
+# Linguist overrides for accurate language detection
+docs/* linguist-documentation
+*.md linguist-documentation
+

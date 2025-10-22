@@ -51,7 +51,7 @@ This document outlines the security measures implemented in this repository to p
 ### **Before (❌ Bad):**
 ```bash
 #!/bin/bash
-PROJECT_ID="free-project-1249"
+PROJECT_ID="your-gcp-project-id"  # Replace with your actual project ID
 REGION="us-central1"
 SA_EMAIL="gke-application-sa@free-project-1249.iam.gserviceaccount.com"
 ```

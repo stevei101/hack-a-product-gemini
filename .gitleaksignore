@@ -1,0 +1,30 @@
+# Gitleaks Ignore File
+# Whitelist known false positives and placeholder values
+
+# Placeholder values in example/template files
+your_secure_postgres_password_here
+your_nvidia_nim_api_key_here
+your_jwt_secret_key_here
+your_api_authentication_key_here
+your-gcp-project-id
+YOUR_PROJECT_ID
+YOUR_GCP_PROJECT_ID
+YOUR_GITHUB_ORG
+YOUR_GITHUB_REPO
+YOUR_API_KEY
+
+# Example configuration files
+backend/env.example:*
+terraform.tfvars.example:*
+
+# Documentation examples (these are intentionally generic)
+docs/**/*your-*
+docs/**/*YOUR_*
+docs/**/*placeholder*
+
+# Generic test values
+test_password
+test_secret
+test_api_key
+example_key
+

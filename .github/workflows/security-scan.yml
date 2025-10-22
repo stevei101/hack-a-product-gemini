@@ -1,0 +1,120 @@
+name: 🔒 Security Scan
+
+on:
+  push:
+    branches: [ main, switch-to-google, develop ]
+  pull_request:
+    branches: [ main, switch-to-google ]
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  gitleaks:
+    name: 🔍 Scan for Secrets (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for full scan
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  trufflehog:
+    name: 🐷 Scan for Secrets (TruffleHog)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+  dependency-review:
+    name: 📦 Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: moderate
+
+  python-security:
+    name: 🐍 Python Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install bandit[toml] safety
+
+      - name: Run Bandit (Security Linter)
+        run: |
+          cd backend
+          bandit -r src/ -f json -o bandit-report.json || true
+          bandit -r src/ -ll
+
+      - name: Run Safety (Dependency Vulnerabilities)
+        run: |
+          cd backend
+          safety check --json || true
+
+      - name: Upload Bandit Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: bandit-security-report
+          path: backend/bandit-report.json
+
+  terraform-security:
+    name: 🏗️ Terraform Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          soft_fail: true
+          
+  summary:
+    name: 📊 Security Summary
+    runs-on: ubuntu-latest
+    needs: [gitleaks, trufflehog, python-security, terraform-security]
+    if: always()
+    steps:
+      - name: Security Scan Results
+        run: |
+          echo "## 🔒 Security Scan Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All security scans have completed." >> $GITHUB_STEP_SUMMARY
+          echo "Please review any findings in the job logs above." >> $GITHUB_STEP_SUMMARY
+
