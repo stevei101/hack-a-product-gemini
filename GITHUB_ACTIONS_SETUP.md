@@ -34,9 +34,9 @@ POSTGRES_PASSWORD=your_secure_password
 3. **Connect to your GitHub repository**
 4. **Configure workspace variables**:
    ```
-   github_org = "stevei101"
-   github_repo = "hack-a-product"
-   environment = "dev"
+   gcp_project_id = "your-gcp-project-id"
+   environment = "development"
+   # Note: github_org and github_repo removed - will be re-added when OIDC integration is implemented
    ```
 
 ### **Step 3: Deploy IAM Resources**

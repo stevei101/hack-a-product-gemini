@@ -21,16 +21,6 @@ variable "environment" {
   default     = "development"
 }
 
-variable "github_org" {
-  description = "The name of your GitHub organization."
-  type        = string
-}
-
-variable "github_repo" {
-  description = "The name of your GitHub repository."
-  type        = string
-}
-
 variable "tfc_workspace_prefix" {
   description = "The prefix for Terraform Cloud workspace names."
   type        = string

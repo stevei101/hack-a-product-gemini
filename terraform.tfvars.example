@@ -5,10 +5,6 @@
 project_name = "product-mindset"
 environment  = "dev"  # dev, staging, prod
 
-# GitHub Configuration
-github_org  = "stevei101"        # Your GitHub organization
-github_repo = "hack-a-product-gemini"   # Your repository name
-
 # GCP Configuration
 gcp_project_id = "your-gcp-project-id"
 gcp_region     = "us-central1"

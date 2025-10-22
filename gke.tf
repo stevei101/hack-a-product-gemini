@@ -6,6 +6,11 @@
 resource "google_compute_network" "vpc" {
   name                    = "gke-network"
   auto_create_subnetworks = false
+
+  lifecycle {
+    # Prevent destruction of the network if it causes issues
+    prevent_destroy = false
+  }
 }
 
 # Subnetwork for GKE
@@ -14,6 +19,11 @@ resource "google_compute_subnetwork" "subnet" {
   ip_cidr_range = "10.10.0.0/24"
   network       = google_compute_network.vpc.self_link
   region        = var.gcp_region
+
+  lifecycle {
+    # Prevent destruction of the subnet if it causes issues
+    prevent_destroy = false
+  }
 }
 
 # GKE Cluster

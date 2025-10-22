@@ -76,7 +76,7 @@ gcloud services list --enabled --project=$GCP_PROJECT_ID
 ### Step 1.2: Code Fixes (Already Applied) ✅
 
 **Fixed Issues:**
-- ✅ Variable names corrected in workflow (`github_org`/`github_repo`)
+- ✅ Removed unused variables (`github_org`/`github_repo` - reserved for future OIDC integration)
 - ✅ Kubernetes provider uncommented and properly configured
 - ✅ Data source dependency added for GKE cluster
 
