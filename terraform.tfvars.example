@@ -13,6 +13,9 @@ github_repo = "hack-a-product-gemini"   # Your repository name
 gcp_project_id = "your-gcp-project-id"
 gcp_region     = "us-central1"
 
+# Optional: Override default bucket name (defaults to {project_id}-frontend-bucket)
+# bucket_name = "my-custom-bucket-name"
+
 # Domain Configuration (optional)
 domain_name = ""  # Leave empty if not using custom domain
 

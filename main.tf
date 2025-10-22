@@ -25,7 +25,7 @@ provider "google" {
 # --- GCS Bucket for Static Website ---
 
 resource "google_storage_bucket" "site" {
-  name          = "${var.gcp_project_id}-frontend-bucket"
+  name          = var.bucket_name != "" ? var.bucket_name : "${var.gcp_project_id}-frontend-bucket"
   location      = "US"
   force_destroy = true
 

@@ -5,6 +5,12 @@ variable "gcp_project_id" {
   type        = string
 }
 
+variable "bucket_name" {
+  description = "The name of the GCS bucket for frontend hosting. If not set, defaults to {project_id}-frontend-bucket"
+  type        = string
+  default     = ""
+}
+
 variable "gcp_region" {
   description = "The GCP region to create resources in."
   default     = "us-central1"
