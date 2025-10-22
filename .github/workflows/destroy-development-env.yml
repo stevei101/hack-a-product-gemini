@@ -12,7 +12,7 @@ jobs:
   terraform-destroy:
     name: 'Terraform Destroy'
     runs-on: ubuntu-latest
-    environment: production # Or your development environment name
+    environment: development # Or your environment name
 
     permissions:
       id-token: write
