@@ -18,9 +18,9 @@ set -u
 
 # --- CONFIGURATION ---
 # UPDATE THESE VARIABLES WITH YOUR SPECIFIC VALUES
-GCP_PROJECT_ID="free-project-1249"
-GITHUB_ORG="stevei101"
-GITHUB_REPO="hack-a-product-gemini"
+GCP_PROJECT_ID="YOUR_GCP_PROJECT_ID"  # Replace with your GCP project ID
+GITHUB_ORG="YOUR_GITHUB_ORG"          # Replace with your GitHub org/username
+GITHUB_REPO="YOUR_GITHUB_REPO"        # Replace with your repository name
 
 # --- SCRIPT ---
 GSA_NAME="github-actions-runner"

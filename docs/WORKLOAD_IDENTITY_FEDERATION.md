@@ -19,8 +19,7 @@ The Workload Identity Federation has been configured with the following componen
 
 ### Service Account
 - **Name:** `github-actions-runner`
-- **Email:** `github-actions-runner@free-project-1249.iam.gserviceaccount.com`
-- **Unique ID:** `111102752320276613439`
+- **Email:** `github-actions-runner@YOUR_PROJECT_ID.iam.gserviceaccount.com`
 - **Role:** `roles/owner` (granted for hackathon; use least-privilege roles in production)
 
 ### Workload Identity Pool
@@ -43,8 +42,9 @@ Configure these secrets at:
 
 | Secret Name | Value | Description |
 |-------------|-------|-------------|
-| `WIF_PROVIDER` | `projects/771642754691/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider` | WIF provider resource path |
-| `WIF_SERVICE_ACCOUNT` | `github-actions-runner@free-project-1249.iam.gserviceaccount.com` | Service account email |
+| `WIF_PROVIDER` | `projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider` | WIF provider resource path |
+| `WIF_SERVICE_ACCOUNT` | `github-actions-runner@YOUR_PROJECT_ID.iam.gserviceaccount.com` | Service account email |
+| `GCP_PROJECT_ID` | `YOUR_PROJECT_ID` | Your GCP project ID |
 | `TF_API_TOKEN` | `<your-terraform-cloud-token>` | Terraform Cloud API token |
 | `POSTGRES_PASSWORD` | `<your-password>` | PostgreSQL database password |
 | `NIM_API_KEY` | `<your-api-key>` | NVIDIA NIM API key |
@@ -152,18 +152,20 @@ Current configuration grants `roles/owner` for hackathon simplicity.
 
 **For Production, use least-privilege roles:**
 ```bash
+export GCP_PROJECT_ID="YOUR_PROJECT_ID"
+
 # Remove owner role
-gcloud projects remove-iam-policy-binding free-project-1249 \
-  --member="serviceAccount:github-actions-runner@free-project-1249.iam.gserviceaccount.com" \
+gcloud projects remove-iam-policy-binding ${GCP_PROJECT_ID} \
+  --member="serviceAccount:github-actions-runner@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/owner"
 
 # Grant specific roles
-gcloud projects add-iam-policy-binding free-project-1249 \
-  --member="serviceAccount:github-actions-runner@free-project-1249.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+  --member="serviceAccount:github-actions-runner@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/container.admin"
 
-gcloud projects add-iam-policy-binding free-project-1249 \
-  --member="serviceAccount:github-actions-runner@free-project-1249.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+  --member="serviceAccount:github-actions-runner@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/compute.networkAdmin"
 
 # Add other specific roles as needed
@@ -179,8 +181,10 @@ gcloud projects add-iam-policy-binding free-project-1249 \
 **Fix:** Grant specific role to service account
 
 ```bash
-gcloud projects add-iam-policy-binding free-project-1249 \
-  --member="serviceAccount:github-actions-runner@free-project-1249.iam.gserviceaccount.com" \
+export GCP_PROJECT_ID="YOUR_PROJECT_ID"
+
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+  --member="serviceAccount:github-actions-runner@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/REQUIRED_ROLE"
 ```
 
@@ -208,21 +212,24 @@ gcloud projects add-iam-policy-binding free-project-1249 \
 To rotate the service account:
 
 ```bash
+export GCP_PROJECT_ID="YOUR_PROJECT_ID"
+export PROJECT_NUMBER=$(gcloud projects describe ${GCP_PROJECT_ID} --format='value(projectNumber)')
+
 # Create new service account
 gcloud iam service-accounts create github-actions-runner-new \
   --display-name="GitHub Actions Runner (New)" \
-  --project=free-project-1249
+  --project=${GCP_PROJECT_ID}
 
 # Grant same roles
-gcloud projects add-iam-policy-binding free-project-1249 \
-  --member="serviceAccount:github-actions-runner-new@free-project-1249.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+  --member="serviceAccount:github-actions-runner-new@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/owner"
 
 # Update WIF binding
 gcloud iam service-accounts add-iam-policy-binding \
-  github-actions-runner-new@free-project-1249.iam.gserviceaccount.com \
+  github-actions-runner-new@${GCP_PROJECT_ID}.iam.gserviceaccount.com \
   --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/projects/771642754691/locations/global/workloadIdentityPools/github-actions-pool/attribute.repository/stevei101/hack-a-product-gemini"
+  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-actions-pool/attribute.repository/YOUR_ORG/YOUR_REPO"
 
 # Update GitHub secret WIF_SERVICE_ACCOUNT
 # Test workflow
@@ -234,7 +241,9 @@ gcloud iam service-accounts add-iam-policy-binding \
 To allow another repository to use WIF:
 
 ```bash
-export NEW_REPO="stevei101/another-repo"
+export GCP_PROJECT_ID="YOUR_PROJECT_ID"
+export PROJECT_NUMBER=$(gcloud projects describe ${GCP_PROJECT_ID} --format='value(projectNumber)')
+export NEW_REPO="YOUR_ORG/another-repo"
 
 # Update provider attribute condition
 gcloud iam workload-identity-pools providers update-oidc github-actions-provider \
@@ -244,9 +253,9 @@ gcloud iam workload-identity-pools providers update-oidc github-actions-provider
 
 # Add IAM binding for new repo
 gcloud iam service-accounts add-iam-policy-binding \
-  github-actions-runner@free-project-1249.iam.gserviceaccount.com \
+  github-actions-runner@${GCP_PROJECT_ID}.iam.gserviceaccount.com \
   --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/projects/771642754691/locations/global/workloadIdentityPools/github-actions-pool/attribute.repository/${NEW_REPO}"
+  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-actions-pool/attribute.repository/${NEW_REPO}"
 ```
 
 ---

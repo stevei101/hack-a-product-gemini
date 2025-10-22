@@ -43,7 +43,7 @@ This document provides a comprehensive plan to complete the Terraform Cloud and 
 
 ```bash
 # Set your project ID
-export GCP_PROJECT_ID="free-project-1249"  # Replace with your actual project ID
+export GCP_PROJECT_ID="YOUR_PROJECT_ID"  # Replace with your actual project ID
 
 # Enable all required APIs
 gcloud services enable \
