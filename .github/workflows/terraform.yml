@@ -41,6 +41,11 @@ jobs:
     - name: Terraform Format Check
       run: terraform fmt -check -recursive
 
+    - name: Check Token Length
+      run: echo "Token length is ${#TF_API_TOKEN}"
+      env:
+        TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+
     - name: Terraform Init
       run: terraform init
 
