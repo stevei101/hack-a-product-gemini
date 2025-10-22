@@ -43,3 +43,15 @@ variable "cluster_name" {
   default     = "product-mindset-dev"
 }
 
+variable "POSTGRES_PASSWORD" {
+  description = "The password for the PostgreSQL database."
+  type        = string
+  sensitive   = true
+}
+
+variable "NIM_API_KEY" {
+  description = "The API key for NVIDIA NIM."
+  type        = string
+  sensitive   = true
+}
+
