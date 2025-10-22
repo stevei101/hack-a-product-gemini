@@ -4,7 +4,6 @@ AKA hack-a-product
 
 **The Product Mindset** is an AI-powered agentic workspace that acts as a thinking companion for creators and developers. Built for the AWS & NVIDIA Hackathon, it demonstrates cutting-edge AI integration with a focus on agentic workflows and retrieval-augmented generation.
 
-![Screenshot of the application UI](./preview.png)
 
 ## 🧠 Updated Architecture — NIM-Compliant Edition
 
