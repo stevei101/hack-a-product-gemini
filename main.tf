@@ -6,7 +6,7 @@ terraform {
     organization = "disposable-org"
 
     workspaces {
-      name = "hack-a-product"
+      name = "hack-a-product-gemini"
     }
   }
 
