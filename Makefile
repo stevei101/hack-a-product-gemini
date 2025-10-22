@@ -12,6 +12,9 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # Frontend Development commands
+install: ## Install frontend dependencies
+	bun install
+
 dev: ## Start frontend development server
 	bun run dev
 
@@ -26,18 +29,59 @@ test: ## Run tests (placeholder - add your test command here)
 
 # Backend Development commands
 backend-dev: ## Start backend development server
-	cd backend && source .venv/bin/activate && python3 test_server.py
+	cd backend && source .venv/bin/activate && PYTHONPATH="${CURDIR}/backend/src:${PYTHONPATH}" python3 test_server.py
 
 backend-setup: ## Set up backend environment
-	@if [ ! -d "backend/.venv" ]; then \
-		cd backend && python3 -m venv .venv; \
+	@echo "🔧 Setting up backend with uv..."
+	@if ! command -v uv &> /dev/null; then \
+		echo "📦 Installing uv..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
 	fi
-	cd backend && source .venv/bin/activate && pip install uv && uv pip install fastapi uvicorn sqlalchemy asyncpg httpx pydantic pydantic-settings numpy
+	@if [ ! -d "backend/.venv" ]; then \
+		echo "🐍 Creating virtual environment with uv..."; \
+		cd backend && uv venv; \
+	fi
+	@echo "📦 Installing dependencies with uv..."
+	cd backend && uv pip install fastapi uvicorn sqlalchemy asyncpg httpx pydantic pydantic-settings python-dotenv redis numpy openai pytest pytest-asyncio pytest-cov fakeredis
 
-backend-env: ## Create secure environment variables file
-	./setup_env.sh
+backend-env: ## Copy environment variables template
+	@if [ ! -f "backend/.env" ]; then \
+		cp backend/env.example backend/.env; \
+		echo "✅ Created backend/.env from template"; \
+		echo "⚠️  Please edit backend/.env and set your NVIDIA API key"; \
+	else \
+		echo "✅ backend/.env already exists"; \
+	fi
 
-backend-test: ## Test backend endpoints
+backend-install: ## Install backend dependencies from requirements.txt
+	@echo "📦 Installing backend dependencies from requirements.txt..."
+	@if ! command -v uv &> /dev/null; then \
+		echo "❌ uv not found. Run 'make backend-setup' first"; \
+		exit 1; \
+	fi
+	cd backend && uv pip install -r requirements.txt
+
+backend-install-dev: ## Install backend dev dependencies
+	@echo "📦 Installing backend dev dependencies..."
+	@if ! command -v uv &> /dev/null; then \
+		echo "❌ uv not found. Run 'make backend-setup' first"; \
+		exit 1; \
+	fi
+	cd backend && uv pip install -r requirements.txt -r requirements-dev.txt
+
+backend-test: ## Run backend tests
+	@echo "🧪 Running backend tests..."
+	cd backend && source .venv/bin/activate && PYTHONPATH="${CURDIR}/backend/src:${PYTHONPATH}" pytest tests/ -v
+
+backend-test-quick: ## Run backend tests (quick)
+	@echo "🧪 Running quick backend tests..."
+	cd backend && source .venv/bin/activate && PYTHONPATH="${CURDIR}/backend/src:${PYTHONPATH}" ./scripts/test_quick.sh
+
+backend-test-coverage: ## Run backend tests with coverage
+	@echo "📊 Running tests with coverage..."
+	cd backend && source .venv/bin/activate && PYTHONPATH="${CURDIR}/backend/src:${PYTHONPATH}" ./scripts/run_tests.sh coverage
+
+backend-api-test: ## Test backend API endpoints
 	@echo "Testing backend endpoints..."
 	@curl -s http://localhost:8000/health | head -5
 	@curl -s http://localhost:8000/api/v1/nim/health | head -5
@@ -45,6 +89,37 @@ backend-test: ## Test backend endpoints
 backend-logs: ## View backend logs
 	@echo "Backend logs (if running):"
 	@ps aux | grep test_server | grep -v grep
+
+backend-clean: ## Clean backend virtual environment and cache
+	@echo "🧹 Cleaning backend environment..."
+	rm -rf backend/.venv
+	rm -rf backend/__pycache__
+	rm -rf backend/src/agentic_app/__pycache__
+	find backend -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find backend -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+	@echo "✅ Backend cleaned"
+
+backend-reset: backend-clean backend-setup ## Reset backend environment completely
+	@echo "🔄 Backend environment reset complete!"
+
+# Service commands
+services-start: ## Start PostgreSQL and Redis services using Podman
+	./start_services.sh
+
+services-stop: ## Stop PostgreSQL and Redis services
+	@echo "🛑 Stopping development services..."
+	podman stop postgres-dev redis-dev 2>/dev/null || true
+	@echo "✅ Services stopped"
+
+services-status: ## Check status of development services
+	@echo "📊 Service Status:"
+	@podman ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "postgres-dev|redis-dev|NAMES" || echo "No services running"
+
+services-clean: ## Remove PostgreSQL and Redis containers
+	@echo "🗑️  Removing development service containers..."
+	podman stop postgres-dev redis-dev 2>/dev/null || true
+	podman rm postgres-dev redis-dev 2>/dev/null || true
+	@echo "✅ Service containers removed"
 
 # Security commands
 security-scan: ## Run security vulnerability scan
@@ -57,20 +132,23 @@ security-report: ## Generate security report
 
 security-setup: ## Set up secure environment and run security scan
 	@echo "🔐 Setting up secure environment..."
-	./setup_env.sh
+	@make backend-env
 	@echo "🔍 Running security scan..."
 	./security_scan.sh
 
-clean: ## Clean build artifacts
+clean: ## Clean build artifacts (frontend only)
 	rm -rf dist/
 	rm -rf node_modules/
 
-# Container commands (auto-detects Docker/Podman)
+clean-all: clean backend-clean ## Clean all build artifacts and environments
+	@echo "✅ All cleaned!"
+
+# Container commands (uses Podman)
 container-build: ## Build container images for both frontend and backend
 	@echo "Building frontend container..."
-	docker build -t smithveunsa/react-bun-k8s:frontend .
+	podman build -t smithveunsa/react-bun-k8s:frontend .
 	@echo "Building backend container..."
-	docker build -t smithveunsa/react-bun-k8s:backend ./backend
+	podman build -t smithveunsa/react-bun-k8s:backend ./backend
 
 container-build-registry: ## Build and tag for registry (usage: make container-build-registry REGISTRY=ghcr.io/username)
 	@if [ -z "$(REGISTRY)" ]; then \
@@ -78,19 +156,19 @@ container-build-registry: ## Build and tag for registry (usage: make container-b
 		exit 1; \
 	fi
 	@echo "Building and tagging for registry: $(REGISTRY)"
-	docker build -t $(REGISTRY):frontend .
-	docker build -t $(REGISTRY):backend ./backend
+	podman build -t $(REGISTRY):frontend .
+	podman build -t $(REGISTRY):backend ./backend
 
 container-run: ## Run containers locally
 	@echo "Starting backend container..."
-	docker run -d --name backend -p 8000:8000 smithveunsa/react-bun-k8s:backend
+	podman run -d --name backend -p 8000:8000 smithveunsa/react-bun-k8s:backend
 	@echo "Starting frontend container..."
-	docker run -d --name frontend -p 3000:80 smithveunsa/react-bun-k8s:frontend
+	podman run -d --name frontend -p 3000:80 smithveunsa/react-bun-k8s:frontend
 	@echo "✅ Containers started! Backend: http://localhost:8000, Frontend: http://localhost:3000"
 
 container-stop: ## Stop running containers
-	docker stop backend frontend || true
-	docker rm backend frontend || true
+	podman stop backend frontend || true
+	podman rm backend frontend || true
 
 container-push: ## Push containers to registry (usage: make container-push REGISTRY=ghcr.io/username)
 	@if [ -z "$(REGISTRY)" ]; then \
@@ -98,8 +176,8 @@ container-push: ## Push containers to registry (usage: make container-push REGIS
 		exit 1; \
 	fi
 	@echo "Pushing to registry: $(REGISTRY)"
-	docker push $(REGISTRY):frontend
-	docker push $(REGISTRY):backend
+	podman push $(REGISTRY):frontend
+	podman push $(REGISTRY):backend
 
 # GitHub Actions Deployment commands
 github-secrets: ## Show required GitHub repository secrets
@@ -170,29 +248,32 @@ quick-start: backend-env backend-setup ## Quick start for testing
 	@echo "✅ Backend environment ready!"
 	@echo "📝 Next steps:"
 	@echo "  1. Edit backend/.env and set your NVIDIA API key"
-	@echo "  2. Run 'make backend-dev' to start the backend"
-	@echo "  3. Run 'make dev' to start the frontend"
-	@echo "  4. Visit http://localhost:3000 for the UI"
-	@echo "  5. Visit http://localhost:8000/docs for API docs"
+	@echo "  2. Run 'make services-start' to start PostgreSQL and Redis"
+	@echo "  3. Run 'make backend-dev' to start the backend"
+	@echo "  4. Run 'make dev' to start the frontend"
+	@echo "  5. Visit http://localhost:5173 for the UI"
+	@echo "  6. Visit http://localhost:8000/docs for API docs"
 
-full-start: backend-env backend-setup install ## Complete setup for development
+full-start: backend-env backend-setup ## Complete setup for development
 	@echo "🚀 Setting up The Product Mindset for full development..."
 	@echo "✅ Frontend and backend environments ready!"
 	@echo "📝 Next steps:"
 	@echo "  1. Edit backend/.env and set your NVIDIA API key"
-	@echo "  2. Run 'make backend-dev' to start the backend"
-	@echo "  3. Run 'make dev' to start the frontend"
-	@echo "  4. Visit http://localhost:3000 for the UI"
-	@echo "  5. Visit http://localhost:8000/docs for API docs"
+	@echo "  2. Run 'make services-start' to start PostgreSQL and Redis"
+	@echo "  3. Run 'make backend-dev' to start the backend"
+	@echo "  4. Run 'make dev' to start the frontend"
+	@echo "  5. Visit http://localhost:5173 for the UI"
+	@echo "  6. Visit http://localhost:8000/docs for API docs"
 
-secure-start: security-setup backend-setup install ## Complete secure setup with security scan
+secure-start: security-setup backend-setup ## Complete secure setup with security scan
 	@echo "🔐 Setting up The Product Mindset with security best practices..."
 	@echo "✅ Secure environment ready!"
 	@echo "📝 Next steps:"
 	@echo "  1. Edit backend/.env and set your NVIDIA API key"
-	@echo "  2. Run 'make backend-dev' to start the backend"
-	@echo "  3. Run 'make dev' to start the frontend"
-	@echo "  4. Review security report in SECURITY_REPORT.md"
+	@echo "  2. Run 'make services-start' to start PostgreSQL and Redis"
+	@echo "  3. Run 'make backend-dev' to start the backend"
+	@echo "  4. Run 'make dev' to start the frontend"
+	@echo "  5. Review security report in SECURITY_REPORT.md"
 
 # Complete setup commands
 full-setup: check-prerequisites install k8s-setup ## Complete setup including Kubernetes

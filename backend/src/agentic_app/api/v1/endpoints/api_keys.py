@@ -5,14 +5,14 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
-from ...core.database import get_db
-from ...core.auth import require_admin_permission, get_current_api_key
-from ...schemas.api_key import (
+from agentic_app.core.database import get_db
+from agentic_app.core.auth import require_admin_permission, get_current_api_key
+from agentic_app.schemas.api_key import (
     ApiKeyCreate, ApiKeyResponse, ApiKeyWithSecret, ApiKeyUpdate, 
     ApiKeyList, ApiKeyUsage
 )
-from ...services.api_key_service import ApiKeyService
-from ...models.api_key import ApiKey
+from agentic_app.services.api_key_service import ApiKeyService
+from agentic_app.models.api_key import ApiKey
 
 router = APIRouter()
 

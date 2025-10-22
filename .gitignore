@@ -231,4 +231,30 @@ cmake/sources/*.txt
 
 # Python virtual environment
 **/.venv
+
+# Python cache files
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+eggs/
+.eggs/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.coverage
+htmlcov/
+
+# Python config files (keep pytest.ini in repo)
+*.ini
+!pytest.ini
+!setup.cfg
+
+# Terraform
 .terraform*

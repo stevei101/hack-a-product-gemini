@@ -7,7 +7,7 @@ from sqlalchemy import String, DateTime, Boolean, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
-from .base import Base
+from agentic_app.core.database import Base
 
 
 class ApiKey(Base):
