@@ -1,4 +1,4 @@
-name: Terraform CI/CD
+name: 'Terraform Cloud'
 
 on:
   push:
@@ -6,17 +6,29 @@ on:
   pull_request:
     branches: [ switch-to-google ]
 
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_CLOUD_ORGANIZATION: "disposable-org"
+  TF_WORKSPACE: "hack-a-product-gemini"
+  TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
+
 jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
+    environment: production
+
+    # Set Terraform Cloud variables as environment variables
     env:
-      TF_VERSION: '1.6.0'
+      TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
       TF_VAR_github_org: ${{ github.repository_owner }}
       TF_VAR_github_repo: ${{ github.event.repository.name }}
+      TF_VAR_POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      TF_VAR_NIM_API_KEY: ${{ secrets.NIM_API_KEY }}
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -24,32 +36,62 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
-        terraform_version: ${{ env.TF_VERSION }}
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v2
-      with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-    - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v2
-
-    - name: Configure gcloud
-      run: |
-        gcloud auth activate-service-account --key-file=<(echo '${{ secrets.GCP_SA_KEY }}')
-        gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+    - name: Terraform Format
+      id: fmt
+      run: terraform fmt -check
+      continue-on-error: true
 
     - name: Terraform Init
+      id: init
       run: terraform init
 
     - name: Terraform Validate
-      run: terraform validate
+      id: validate
+      run: terraform validate -no-color
 
     - name: Terraform Plan
-      run: terraform plan -no-color
+      id: plan
+      if: github.event_name == 'pull_request'
+      run: terraform plan -no-color -input=false
       continue-on-error: true
 
+    - name: Post Plan to PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      env:
+        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+          <details><summary>Show Plan</summary>
+
+          \`\`\`\n
+          ${process.env.PLAN}
+          \`\`\`
+
+          </details>
+
+          *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+
+    - name: Terraform Plan Status
+      if: steps.plan.outcome == 'failure'
+      run: exit 1
+
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve
+      if: github.ref == 'refs/heads/switch-to-google' && github.event_name == 'push'
+      run: terraform apply -auto-approve -input=false
       
