@@ -57,32 +57,32 @@ export default function App() {
 
           {/* Features */}
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="text-blue-600 mb-4">
-                <Zap className="h-8 w-8 mx-auto" />
+            <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center h-full">
+              <div className="text-blue-600 mb-4 flex-shrink-0">
+                <Zap className="h-10 w-10 mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Bun Runtime</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Bun Runtime</h3>
+              <p className="text-gray-600 flex-grow">
                 Lightning-fast builds and package management with Bun's native TypeScript support.
               </p>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="text-blue-600 mb-4">
-                <Sparkles className="h-8 w-8 mx-auto" />
+            <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center h-full">
+              <div className="text-blue-600 mb-4 flex-shrink-0">
+                <Sparkles className="h-10 w-10 mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Docker Containerized</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Docker Containerized</h3>
+              <p className="text-gray-600 flex-grow">
                 Multi-stage Docker builds for optimized, lightweight production images.
               </p>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="text-blue-600 mb-4">
-                <Rocket className="h-8 w-8 mx-auto" />
+            <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center h-full">
+              <div className="text-blue-600 mb-4 flex-shrink-0">
+                <Rocket className="h-10 w-10 mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Kubernetes Ready</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Kubernetes Ready</h3>
+              <p className="text-gray-600 flex-grow">
                 Helm charts for declarative, scalable deployments on any Kubernetes cluster.
               </p>
             </div>
