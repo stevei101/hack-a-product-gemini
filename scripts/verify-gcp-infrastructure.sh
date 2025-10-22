@@ -3,7 +3,15 @@
 # GCP Infrastructure Verification Script
 # Verifies all deployed resources and their configurations
 #
-# Usage: ./verify-gcp-infrastructure.sh
+# Usage: 
+#   export GCP_PROJECT_ID="your-project-id"
+#   ./verify-gcp-infrastructure.sh
+#
+# Optional environment variables:
+#   GCP_PROJECT_ID    - Your GCP project ID (required)
+#   GCP_REGION        - GCP region (default: us-central1)
+#   CLUSTER_NAME      - GKE cluster name (default: primary-cluster)
+#   SA_NAME           - Service account name (default: gke-application-sa)
 
 set -e
 
@@ -14,11 +22,23 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuration
-PROJECT_ID="free-project-1249"
-REGION="us-central1"
-CLUSTER_NAME="primary-cluster"
-SA_EMAIL="gke-application-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+# Configuration from environment variables or defaults
+PROJECT_ID="${GCP_PROJECT_ID:-}"
+REGION="${GCP_REGION:-us-central1}"
+CLUSTER_NAME="${CLUSTER_NAME:-primary-cluster}"
+SA_NAME="${SA_NAME:-gke-application-sa}"
+SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+# Validate required variables
+if [ -z "$PROJECT_ID" ]; then
+    echo -e "${RED}Error: GCP_PROJECT_ID environment variable is required${NC}"
+    echo ""
+    echo "Usage:"
+    echo "  export GCP_PROJECT_ID=\"your-project-id\""
+    echo "  ./verify-gcp-infrastructure.sh"
+    echo ""
+    exit 1
+fi
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}GCP Infrastructure Verification${NC}"

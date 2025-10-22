@@ -9,6 +9,14 @@ Complete guide to verify all deployed resources in Google Cloud Platform.
 Run the automated verification script:
 
 ```bash
+# Set your project ID
+export GCP_PROJECT_ID="your-project-id"
+
+# Optional: customize other settings
+export GCP_REGION="us-central1"
+export CLUSTER_NAME="primary-cluster"
+
+# Run verification
 cd scripts
 ./verify-gcp-infrastructure.sh
 ```
@@ -22,12 +30,12 @@ This will check all 10 infrastructure components and provide a summary.
 ### **Prerequisites**
 
 ```bash
-# Set your project
-export PROJECT_ID="free-project-1249"
-export REGION="us-central1"
+# Set your project (REPLACE WITH YOUR ACTUAL PROJECT ID)
+export GCP_PROJECT_ID="your-project-id"
+export GCP_REGION="us-central1"
 
 # Configure gcloud
-gcloud config set project ${PROJECT_ID}
+gcloud config set project ${GCP_PROJECT_ID}
 ```
 
 ---
@@ -156,7 +164,7 @@ gcloud storage ls gs://${PROJECT_ID}-frontend-bucket/
 - Look for: **[PROJECT_ID]-frontend-bucket**
 
 ### **Expected:**
-- Name: `free-project-1249-frontend-bucket`
+- Name: `[PROJECT_ID]-frontend-bucket`
 - Location: `US` (multi-region)
 - Storage class: `STANDARD`
 - Public access: `Not public` (uniform bucket-level access)
@@ -206,15 +214,15 @@ gcloud iam service-accounts describe github-actions-runner@${PROJECT_ID}.iam.gse
 ```
 
 ### **Console Verification:**
-- Go to: https://console.cloud.google.com/iam-admin/serviceaccounts
+- Go to: https://console.cloud.google.com/iam-admin/serviceaccounts?project=[YOUR_PROJECT_ID]
 - Look for:
   - **gke-application-sa** (for GKE workloads)
   - **github-actions-runner** (for CI/CD)
 
 ### **Expected Service Accounts:**
-1. `gke-application-sa@free-project-1249.iam.gserviceaccount.com`
+1. `gke-application-sa@[PROJECT_ID].iam.gserviceaccount.com`
    - Display name: "GKE Application Service Account"
-2. `github-actions-runner@free-project-1249.iam.gserviceaccount.com`
+2. `github-actions-runner@[PROJECT_ID].iam.gserviceaccount.com`
    - Display name: "GitHub Actions Runner"
 
 ---
@@ -301,7 +309,7 @@ kubectl cluster-info
 # List nodes
 kubectl get nodes
 
-# Describe a node
+# Describe a node (replace <node-name> with actual node name)
 kubectl describe node <node-name>
 ```
 
@@ -379,10 +387,14 @@ Use this checklist to verify all components:
 ### **Issue: Cannot connect to cluster**
 
 ```bash
+# Set your project ID
+export GCP_PROJECT_ID="your-project-id"
+export GCP_REGION="us-central1"
+
 # Reset kubectl credentials
 gcloud container clusters get-credentials primary-cluster \
-  --region=${REGION} \
-  --project=${PROJECT_ID}
+  --region=${GCP_REGION} \
+  --project=${GCP_PROJECT_ID}
 
 # Test connection
 kubectl get nodes
@@ -391,12 +403,15 @@ kubectl get nodes
 ### **Issue: Workload Identity not working**
 
 ```bash
+# Set your project ID
+export GCP_PROJECT_ID="your-project-id"
+
 # Check service account annotation
 kubectl get sa app-ksa -n default -o yaml
 
 # Verify IAM binding
 gcloud iam service-accounts get-iam-policy \
-  gke-application-sa@${PROJECT_ID}.iam.gserviceaccount.com
+  gke-application-sa@${GCP_PROJECT_ID}.iam.gserviceaccount.com
 ```
 
 ### **Issue: Missing resources**
@@ -434,8 +449,11 @@ After verifying infrastructure:
 
 1. **Build Docker Images**
    ```bash
-   docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/app-images/frontend:latest .
-   docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/app-images/frontend:latest
+   export GCP_PROJECT_ID="your-project-id"
+   export GCP_REGION="us-central1"
+   
+   docker build -t ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/app-images/frontend:latest .
+   docker push ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/app-images/frontend:latest
    ```
 
 2. **Deploy with Helm**
@@ -445,7 +463,7 @@ After verifying infrastructure:
 
 3. **Deploy Static Site to GCS**
    ```bash
-   gcloud storage rsync -r ./dist gs://${PROJECT_ID}-frontend-bucket
+   gcloud storage rsync -r ./dist gs://${GCP_PROJECT_ID}-frontend-bucket
    ```
 
 4. **Monitor Deployments**
