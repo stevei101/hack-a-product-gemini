@@ -2,13 +2,7 @@
 terraform {
   required_version = ">= 1.1.0"
 
-  cloud {
-    organization = "disposable-org"
 
-    workspaces {
-      name = "hack-a-product-gemini"
-    }
-  }
 
   required_providers {
     google = {
