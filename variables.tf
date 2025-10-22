@@ -28,6 +28,11 @@ variable "github_repo" {
 variable "tfc_organization" {
   description = "The name of your Terraform Cloud organization."
   type        = string
+}
+
+variable "tfc_organization" {
+  description = "The name of your Terraform Cloud organization."
+  type        = string
   default     = "disposable-org"
 }
 

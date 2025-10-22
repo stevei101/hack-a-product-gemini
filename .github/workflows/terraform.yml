@@ -30,6 +30,7 @@ jobs:
       TF_VAR_POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       TF_VAR_NIM_API_KEY: ${{ secrets.NIM_API_KEY }}
       TF_VAR_environment: development
+      TF_VAR_tfc_organization: ${{ secrets.TF_CLOUD_ORGANIZATION }}
 
     steps:
     - name: Checkout

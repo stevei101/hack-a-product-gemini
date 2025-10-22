@@ -4,11 +4,7 @@ terraform {
 
   # Terraform Cloud backend configuration
   cloud {
-    organization = "disposable-org"
-
-    workspaces {
-      name = "hack-a-product-gemini"
-    }
+    organization = var.tfc_organization
   }
 
   required_providers {

@@ -23,11 +23,7 @@ jobs:
       TF_VAR_github_org: ${{ github.repository_owner }}
       TF_VAR_github_repo: ${{ github.event.repository.name }}
       TF_VAR_environment: development
-
-    defaults:
-      run:
-        shell: bash
-        working-directory: ./terraform
+      TF_VAR_tfc_organization: ${{ secrets.TF_CLOUD_ORGANIZATION }}
 
     steps:
     - name: Checkout
