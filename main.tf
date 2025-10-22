@@ -2,10 +2,7 @@
 terraform {
   required_version = ">= 1.1.0"
 
-  # Terraform Cloud backend configuration
-  cloud {
-    organization = var.tfc_organization
-  }
+
 
   required_providers {
     google = {
