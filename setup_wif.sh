@@ -18,7 +18,7 @@ set -u
 
 # --- CONFIGURATION ---
 # UPDATE THESE VARIABLES WITH YOUR SPECIFIC VALUES
-GCP_PROJECT_ID="your-gcp-project-id"
+GCP_PROJECT_ID="free-project-1249"
 GITHUB_ORG="stevei101"
 GITHUB_REPO="hack-a-product-gemini"
 
