@@ -25,7 +25,7 @@
 ### 4. **Frontend Updates**
 - **Branding**: Updated to "The Product Mindset"
 - **Loading Messages**: Updated to reflect new branding
-- **Architecture**: Maintained React/Vite/Bun frontend as requested
+- **Architecture**: Maintained React + TypeScript + Bun frontend (Vite powered by Bun, not Node)
 
 ### 5. **Documentation Updates**
 - **Submission Summary**: Updated to reflect Python FastAPI implementation
@@ -128,7 +128,7 @@ User Query → Generate Embedding → Retrieve Context → Enhance Prompt → Ge
 - [x] Uses correct endpoint: integrate.api.nvidia.com/v1
 - [x] Implements complete RAG pipeline
 - [x] Demonstrates agentic behavior
-- [x] Maintains React/Vite/Bun frontend
+- [x] Maintains React + TypeScript + Bun frontend (Vite powered by Bun)
 - [x] Uses Python/uv backend as requested
 - [x] Updates documentation to reflect implementation
 

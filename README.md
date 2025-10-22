@@ -18,7 +18,7 @@ This revised architecture matches the new NVIDIA NIM and retrieval embedding req
 
 ### 🧩 System Overview & Agentic Flow
 ```
-[ Frontend (Next.js + React) ]
+[ Frontend (React + TypeScript + Bun) ]
         ↓
 [ API Gateway / Lambda ]
         ↓
@@ -29,7 +29,7 @@ This revised architecture matches the new NVIDIA NIM and retrieval embedding req
 [ Vector Memory Store (FAISS / DynamoDB) ]
 ```
 
-1.  **User Input:** A user enters a prompt or idea in the Next.js frontend.
+1.  **User Input:** A user enters a prompt or idea in the React frontend.
 2.  **Orchestration:** API Gateway sends the request to the Agentic Orchestrator (Lambda or Bedrock).
 3.  **Reasoning:** The Orchestrator routes the request to the NIM reasoning model (Nemotron-Nano-8B-v1).
 4.  **Enrichment:** The response is enriched by the Retrieval Embedding NIM, which fetches context or prior session data from the Vector Memory Store.
@@ -38,7 +38,7 @@ This revised architecture matches the new NVIDIA NIM and retrieval embedding req
 ### 🧱 Component Breakdown
 
 #### 🪟 Frontend
-- **Stack:** Next.js + Tailwind CSS
+- **Stack:** React + TypeScript + Tailwind CSS (powered by Bun)
 - **Features:**
     - **Chat Canvas:** For ideation and planning.
     - **Knowledge Sidebar:** For context retrieved via the Embedding NIM.
@@ -69,9 +69,9 @@ This revised architecture matches the new NVIDIA NIM and retrieval embedding req
 
 ### 🌐 Deployment Flow
 1.  **NIM Services:** Deploy both NIM containers on an NVIDIA GPU instance (G6, DGX Cloud, or on-prem).
-2.  **Frontend:** Deploy the Next.js frontend via AWS Amplify.
-3.  **Backend:** Deploy the Lambda backend to bridge the AWS and NIM APIs.
-4.  **Security:** Use AWS Secrets Manager for NIM API credentials.
+2.  **Frontend:** Deploy the React frontend to GCP Cloud Storage + CDN (static hosting).
+3.  **Backend:** Deploy the FastAPI backend to GKE (Google Kubernetes Engine).
+4.  **Security:** Use Google Secret Manager for NIM API credentials.
 
 ## 🚀 Quick Start
 

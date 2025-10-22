@@ -42,7 +42,7 @@ jobs:
         with:
           path: ./
           # Scan filesystem instead of git diff to avoid base/head issues
-          extra_args: --only-verified --no-update
+          extra_args: --only-verified
 
   dependency-review:
     name: 📦 Dependency Review

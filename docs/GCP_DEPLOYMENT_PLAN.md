@@ -227,7 +227,7 @@ Verify all secrets are configured at:
 
 1. **Docker Images:**
    ```yaml
-   # Frontend: React + Bun + Vite
+   # Frontend: React + TypeScript + Bun (Vite powered by Bun, not Node)
    FROM node:18
    # Backend: Python 3.11 + FastAPI + uv
    FROM python:3.11

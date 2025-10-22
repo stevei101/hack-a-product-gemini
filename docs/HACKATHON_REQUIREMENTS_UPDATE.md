@@ -162,4 +162,4 @@ Projects (main entity)
 3. **Update Documentation** (Medium Priority)
 4. **Test Complete RAG Pipeline** (Validation)
 
-Would you like me to proceed with implementing these updates while maintaining your React/Vite/Bun frontend and Python/uv backend architecture?
+Would you like me to proceed with implementing these updates while maintaining your React + TypeScript + Bun frontend (Vite powered by Bun) and Python/uv backend architecture?
