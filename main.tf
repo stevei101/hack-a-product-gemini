@@ -50,19 +50,22 @@ resource "google_storage_bucket" "site" {
 
 # --- Kubernetes Provider Configuration ---
 
-# data "google_container_cluster" "primary" {
-#   name     = "primary-cluster"
-#   location = var.gcp_region
-# }
-
-# provider "kubernetes" {
-#   host  = "https://"
-#   token = data.google_container_cluster.primary.endpoint
-
-#   cluster_ca_certificate = base64decode(data.google_container_cluster.primary.master_auth[0].cluster_ca_certificate)
-# }
+# Get cluster credentials
+data "google_container_cluster" "primary" {
+  name     = google_container_cluster.primary.name
+  location = google_container_cluster.primary.location
+  
+  depends_on = [google_container_cluster.primary]
+}
 
 data "google_client_config" "default" {}
+
+# Configure Kubernetes provider to connect to GKE
+provider "kubernetes" {
+  host  = "https://${data.google_container_cluster.primary.endpoint}"
+  token = data.google_client_config.default.access_token
+  cluster_ca_certificate = base64decode(data.google_container_cluster.primary.master_auth[0].cluster_ca_certificate)
+}
 
 # --- Artifact Registry for Docker Images ---
 
