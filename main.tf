@@ -2,7 +2,14 @@
 terraform {
   required_version = ">= 1.1.0"
 
-
+  # Terraform Cloud backend configuration
+  cloud {
+    organization = "disposable-org"
+    
+    workspaces {
+      name = "hack-a-product-gemini"
+    }
+  }
 
   required_providers {
     google = {
@@ -43,17 +50,19 @@ resource "google_storage_bucket" "site" {
 
 # --- Kubernetes Provider Configuration ---
 
-data "google_container_cluster" "primary" {
-  name     = "primary-cluster"
-  location = var.gcp_region
-}
+# data "google_container_cluster" "primary" {
+#   name     = "primary-cluster"
+#   location = var.gcp_region
+# }
 
-provider "kubernetes" {
-  host  = "https://"
-  token = data.google_container_cluster.primary.endpoint
+# provider "kubernetes" {
+#   host  = "https://"
+#   token = data.google_container_cluster.primary.endpoint
 
-  cluster_ca_certificate = base64decode(data.google_container_cluster.primary.master_auth[0].cluster_ca_certificate)
-}
+#   cluster_ca_certificate = base64decode(data.google_container_cluster.primary.master_auth[0].cluster_ca_certificate)
+# }
+
+data "google_client_config" "default" {}
 
 # --- Artifact Registry for Docker Images ---
 
