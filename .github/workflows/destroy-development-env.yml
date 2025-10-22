@@ -1,0 +1,63 @@
+name: 'Destroy Development Environment'
+
+on:
+  workflow_dispatch:
+
+env:
+  TF_CLOUD_ORGANIZATION: "${{ secrets.TF_CLOUD_ORGANIZATION }}"
+  TF_WORKSPACE: "${{ secrets.TF_WORKSPACE }}"
+  TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
+
+jobs:
+  terraform-destroy:
+    name: 'Terraform Destroy'
+    runs-on: ubuntu-latest
+    environment: production # Or your development environment name
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+      TF_VAR_github_org: ${{ github.repository_owner }}
+      TF_VAR_github_repo: ${{ github.event.repository.name }}
+      TF_VAR_environment: development
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud via Workload Identity Federation
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+        service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+        token_format: 'access_token'
+        access_token_lifetime: '3600s'
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Export GCP Credentials for Terraform
+      run: |
+        echo "GOOGLE_OAUTH_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+    - name: Terraform Init
+      id: init
+      run: terraform init
+
+    - name: Terraform Destroy
+      if: github.event_name == 'workflow_dispatch'
+      run: terraform destroy -auto-approve -input=false
