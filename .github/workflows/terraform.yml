@@ -23,6 +23,7 @@ jobs:
 
     # Set Terraform Cloud variables as environment variables
     env:
+      GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
       TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
       TF_VAR_github_org: ${{ github.repository_owner }}
       TF_VAR_github_repo: ${{ github.event.repository.name }}
